@@ -20,6 +20,8 @@ logs
 *.swp
 *.swo
 *~
+# 暂时先忽略trae文件夹
+.trae/
 
 # OS files
 .DS_Store
