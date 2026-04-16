@@ -19,7 +19,7 @@ router.use('/api/orders', orderRoutes.routes(), orderRoutes.allowedMethods());
 router.use('/api/settlements', settlementRoutes.routes(), settlementRoutes.allowedMethods());
 
 // 启动服务器
-const port = process.env.PORT || 3000;
+const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });

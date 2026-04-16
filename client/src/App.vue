@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import StallManagement from '@/views/StallManagement/index.vue';
 import VegetableOrder from '@/views/VegetableOrder/index.vue';
@@ -6,8 +6,8 @@ import Settlement from '@/views/Settlement/index.vue';
 import OrderInfo from '@/views/OrderInfo/index.vue';
 
 // 状态管理
-const activePage = ref('stall-management');
-const pages = [
+const activePage = ref<string>('stall-management');
+const pages: { key: string; title: string; icon: string }[] = [
   { key: 'stall-management', title: '大排档管理', icon: 'store' },
   { key: 'vegetable-order', title: '蔬菜订单', icon: 'shopping-cart' },
   { key: 'settlement', title: '结算', icon: 'calculator' },
@@ -15,7 +15,7 @@ const pages = [
 ];
 
 // 处理导航切换
-const handleNavClick = (page) => {
+const handleNavClick = (page: string): void => {
   activePage.value = page;
 };
 
@@ -43,7 +43,7 @@ onMounted(() => {
           :class="{ active: activePage === page.key }"
           @click.prevent="handleNavClick(page.key)"
         >
-          <i :class="'fas fa-' + page.icon"></i>
+          <i :class="'fas fa-' + page.icon" />
           {{ page.title }}
         </a>
       </div>
@@ -52,17 +52,23 @@ onMounted(() => {
       <div class="main-header">
         <div class="header-left">
           <div class="breadcrumb">
-            <a href="/" @click.prevent="handleNavClick('stall-management')">首页</a>
+            <a
+              href="/"
+              @click.prevent="handleNavClick('stall-management')"
+            >首页</a>
             <span>></span>
             <span>{{ pages.find(p => p.key === activePage)?.title }}</span>
           </div>
         </div>
         <div class="header-right">
           <div class="search-box">
-            <input type="text" placeholder="搜索...">
+            <input
+              type="text"
+              placeholder="搜索..."
+            >
           </div>
           <div class="user-info">
-            <i class="fas fa-user"></i>
+            <i class="fas fa-user" />
             <span>管理员</span>
           </div>
         </div>

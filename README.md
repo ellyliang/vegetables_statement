@@ -9,36 +9,45 @@ vegetables_statement/
 ├── client/               # 前端目录
 │   ├── src/              # 前端源代码
 │   │   ├── api/          # API 服务
+│   │   │   ├── axios.ts
+│   │   │   ├── merchantApi.ts
+│   │   │   ├── orderApi.ts
+│   │   │   └── settlementApi.ts
 │   │   ├── views/        # 页面视图
 │   │   │   ├── StallManagement/  # 大排档管理模块
-│   │   │   │   ├── index.vue      # 组件实现
-│   │   │   │   └── __tests__/     # 测试目录
-│   │   │   │       └── StallManagement.spec.js  # 测试文件
-│   │   │   ├── VegetableOrder/    # 蔬菜订单模块
-│   │   │   │   ├── index.vue      # 组件实现
-│   │   │   │   └── __tests__/     # 测试目录
-│   │   │   │       └── VegetableOrder.spec.js   # 测试文件
-│   │   │   ├── Settlement/        # 结算模块
-│   │   │   │   ├── index.vue      # 组件实现
-│   │   │   │   └── __tests__/     # 测试目录
-│   │   │   │       └── Settlement.spec.js       # 测试文件
-│   │   │   └── OrderInfo/         # 订单信息模块
-│   │   │       ├── index.vue      # 组件实现
-│   │   │       └── __tests__/     # 测试目录
-│   │   │           └── OrderInfo.spec.js        # 测试文件
+│   │   │   │   ├── index.vue
+│   │   │   │   └── __tests__/
+│   │   │   │       └── StallManagement.spec.ts
+│   │   │   ├── VegetableOrder/   # 蔬菜订单模块
+│   │   │   │   ├── index.vue
+│   │   │   │   └── __tests__/
+│   │   │   │       └── VegetableOrder.spec.ts
+│   │   │   ├── Settlement/       # 结算模块
+│   │   │   │   ├── index.vue
+│   │   │   │   └── __tests__/
+│   │   │   │       └── Settlement.spec.ts
+│   │   │   └── OrderInfo/        # 订单信息模块
+│   │   │       ├── index.vue
+│   │   │       └── __tests__/
+│   │   │           └── OrderInfo.spec.ts
+│   │   ├── types.ts      # 公共类型定义
+│   │   ├── env.d.ts      # 环境类型声明
 │   │   ├── App.vue       # 应用入口组件
-│   │   └── main.js       # 应用入口文件
-│   └── public/           # 前端静态资源
+│   │   └── main.ts       # 应用入口文件
 ├── server/               # 后端目录
 │   ├── controllers/      # 控制器
 │   ├── models/           # 数据模型
 │   ├── routes/           # 路由
 │   ├── middleware/       # 中间件
-│   └── app.js            # 服务器入口
+│   ├── types.ts          # 服务端类型定义
+│   └── app.ts            # 服务器入口
 ├── index.html            # HTML 入口文件
 ├── package.json          # 项目依赖
-├── vite.config.js        # Vite 配置
-├── vitest.config.js      # Vitest 配置
+├── tsconfig.json         # TypeScript 根配置
+├── tsconfig.app.json     # 前端 TypeScript 配置
+├── tsconfig.node.json    # 服务端 TypeScript 配置
+├── vite.config.ts        # Vite 配置
+├── vitest.config.ts      # Vitest 配置
 └── README.md             # 项目说明
 ```
 
@@ -46,7 +55,8 @@ vegetables_statement/
 
 - **前端**：Vue 3 + Ant Design Vue + Axios
 - **后端**：Koa + Koa Router
-- **构建工具**：Vite
+- **语言**：TypeScript
+- **构建工具**：Vite + vue-tsc
 - **测试工具**：Vue Test Utils + Vitest
 
 ## TDD 开发方式
@@ -70,7 +80,7 @@ TDD 是一种开发方法，遵循以下步骤：
 
 ### 如何编写测试
 
-1. **创建测试文件**：在组件目录下创建 `__tests__` 文件夹，并创建 `组件名.spec.js` 文件
+1. **创建测试文件**：在组件目录下创建 `__tests__` 文件夹，并创建 `组件名.spec.ts` 文件
 2. **编写测试用例**：使用 `describe` 和 `test` 函数编写测试用例
 3. **模拟依赖**：使用 `vi.mock` 模拟 API 调用和其他外部依赖
 4. **断言**：使用 `expect` 函数断言测试结果
@@ -89,11 +99,10 @@ npm test
 
 以下是一个简单的测试示例：
 
-```javascript
+```typescript
 import { mount } from '@vue/test-utils';
 import MyComponent from '@/views/MyComponent/index.vue';
 import api from '@/api/api';
-import { vi, describe, test, beforeEach, expect } from 'vitest';
 
 // 模拟 API
 vi.mock('@/api/api', () => ({
@@ -103,12 +112,12 @@ vi.mock('@/api/api', () => ({
 }));
 
 describe('MyComponent', () => {
-  let wrapper;
+  let wrapper: ReturnType<typeof mount>;
 
   beforeEach(() => {
     // 模拟 API 响应
-    api.getData.mockResolvedValue({ success: true, data: [] });
-    
+    (api.getData as ReturnType<typeof vi.fn>).mockResolvedValue({ success: true, data: [] });
+
     // 挂载组件
     wrapper = mount(MyComponent);
   });
@@ -164,7 +173,15 @@ npm test
 
 这将运行所有测试用例，并显示测试结果。
 
-### 5. 访问系统
+### 5. 构建生产包
+
+```bash
+npm run build
+```
+
+执行 TypeScript 类型检查后构建，产物输出至 `dist/` 目录。
+
+### 6. 访问系统
 
 打开浏览器访问前端应用地址，即可进入蔬菜接单系统。
 

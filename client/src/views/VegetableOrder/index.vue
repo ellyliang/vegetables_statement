@@ -1,20 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import orderApi from '@/api/orderApi';
 import merchantApi from '@/api/merchantApi';
+import type { Merchant, Order } from '@/types';
 
 // 商户数据
-const merchants = ref([]);
+const merchants = ref<Merchant[]>([]);
 
 // 订单数据
-const orders = ref([]);
+const orders = ref<Order[]>([]);
 
 // 编辑状态
-const isEditing = ref(false);
-const currentOrder = ref({ id: '', vegetable: '', weight: '', price: '', stallId: '', completed: false });
+const isEditing = ref<boolean>(false);
+const currentOrder = ref<Partial<Order> & { id: number | string }>({ id: '', vegetable: '', weight: '', price: '', stallId: '', completed: false });
 
 // 蔬菜分类数据
-const vegetableCategories = ref({
+const vegetableCategories = ref<Record<string, string[]>>({
   '葱姜蒜类': ['韭菜', '蒜苗', '大蒜', '生姜', '大葱', '小葱', '蒜苔', '洋葱', '葱头', '洋姜', '葱仔', '韭菜', '野蒜', '阳荷', '红珠姜', '沙姜', '山姜', '南姜', '凤姜', '沙葱', '茗葱', '葱', '紫（黑）姜', '蒜黄', '葱黄', '韭苔', '葱头', '洋葱苔'],
   '根茎菜类': ['鲜百合', '芦笋', '萝卜', '胡萝卜', '竹笋', '葛根', '魔芋', '木薯', '凉薯', '山药', '红薯', '紫薯', '土豆', '芋头', '板薯', '雪莲果', '盘菜', '广芋', '土耳苕', '糯米薯', '姜薯', '竹芋', '毛薯', '甜菜头', '山药豆', '芥菜头', '根芹'],
   '叶菜类': ['白菜', '小白菜', '生菜', '苋莱', '娃娃菜', '木耳菜', '香菜', '油麦菜', '空心菜', '菠菜', '萝卜菜', '芹菜', '莴笋', '荠菜', '芥莱', '菜苔', '儿菜', '茼蒿', '豆腐菜', '蕹菜', '丝瓜尖', '塌菜', '番杏', '玉兰菜', '水晶菜', '麻叶菜', '紫菜薹', '银丝菜', '菊苣', '羽衣甘蓝', '春菜', '牛皮菜'],
@@ -30,10 +31,10 @@ const vegetableCategories = ref({
 });
 
 // 选中的分类
-const selectedCategory = ref('');
+const selectedCategory = ref<string>('');
 
 // 加载商户数据
-const loadMerchants = async () => {
+const loadMerchants = async (): Promise<void> => {
   try {
     const response = await merchantApi.getAllMerchants();
     if (response.success) {
@@ -45,7 +46,7 @@ const loadMerchants = async () => {
 };
 
 // 加载订单数据
-const loadOrders = async () => {
+const loadOrders = async (): Promise<void> => {
   try {
     const response = await orderApi.getAllOrders();
     if (response.success) {
@@ -57,19 +58,19 @@ const loadOrders = async () => {
 };
 
 // 打开编辑对话框
-const openEditDialog = (order) => {
+const openEditDialog = (order: Order): void => {
   currentOrder.value = { ...order };
   isEditing.value = true;
 };
 
 // 关闭编辑对话框
-const closeEditDialog = () => {
+const closeEditDialog = (): void => {
   isEditing.value = false;
   currentOrder.value = { id: '', vegetable: '', weight: '', price: '', stallId: merchants.value[0]?.id || '', completed: false };
 };
 
 // 保存订单信息
-const saveOrder = async () => {
+const saveOrder = async (): Promise<void> => {
   try {
     if (currentOrder.value.id) {
       // 编辑现有订单
@@ -91,7 +92,7 @@ const saveOrder = async () => {
 };
 
 // 删除订单
-const deleteOrder = async (id) => {
+const deleteOrder = async (id: number | string): Promise<void> => {
   try {
     const response = await orderApi.deleteOrder(id);
     if (response.success) {
@@ -103,7 +104,7 @@ const deleteOrder = async (id) => {
 };
 
 // 切换订单完成状态
-const toggleCompleted = async (id) => {
+const toggleCompleted = async (id: number | string): Promise<void> => {
   try {
     const response = await orderApi.toggleCompleted(id);
     if (response.success) {
@@ -115,13 +116,13 @@ const toggleCompleted = async (id) => {
 };
 
 // 打开添加对话框
-const openAddDialog = () => {
+const openAddDialog = (): void => {
   currentOrder.value = { id: '', vegetable: '', weight: '', price: '', stallId: merchants.value[0]?.id || '', completed: false };
   isEditing.value = true;
 };
 
 // 选择蔬菜
-const selectVegetable = (vegetable) => {
+const selectVegetable = (vegetable: string): void => {
   currentOrder.value.vegetable = vegetable;
 };
 
@@ -136,7 +137,12 @@ onMounted(async () => {
   <div class="vegetable-order-container">
     <h3>蔬菜订单</h3>
     <div style="margin-bottom: 16px;">
-      <button class="btn btn-primary" @click="openAddDialog">添加订单</button>
+      <button
+        class="btn btn-primary"
+        @click="openAddDialog"
+      >
+        添加订单
+      </button>
     </div>
     <table class="table">
       <thead>
@@ -151,36 +157,70 @@ onMounted(async () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="order in orders" :key="order.id">
+        <tr
+          v-for="order in orders"
+          :key="order.id"
+        >
           <td>{{ order.id }}</td>
           <td>{{ order.vegetable }}</td>
           <td>{{ order.weight }}</td>
           <td>{{ order.price }}</td>
           <td>{{ merchants.find(m => m.id === order.stallId)?.name }}</td>
           <td>
-            <input type="checkbox" v-model="order.completed" @change="toggleCompleted(order.id)">
+            <input
+              v-model="order.completed"
+              type="checkbox"
+              @change="toggleCompleted(order.id)"
+            >
             {{ order.completed ? '已完成' : '未完成' }}
           </td>
           <td>
-            <button class="btn btn-primary" @click="openEditDialog(order)">编辑</button>
-            <button class="btn btn-default" @click="deleteOrder(order.id)">删除</button>
+            <button
+              class="btn btn-primary"
+              @click="openEditDialog(order)"
+            >
+              编辑
+            </button>
+            <button
+              class="btn btn-default"
+              @click="deleteOrder(order.id)"
+            >
+              删除
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
 
     <!-- 编辑对话框 -->
-    <div v-if="isEditing" class="dialog-overlay">
+    <div
+      v-if="isEditing"
+      class="dialog-overlay"
+    >
       <div class="dialog-content">
         <h4>{{ currentOrder.id ? '编辑订单' : '添加订单' }}</h4>
         <div class="form-item">
           <label class="form-label">蔬菜分类：</label>
-          <select v-model="selectedCategory" class="form-control">
-            <option value="">请选择分类</option>
-            <option v-for="(vegetables, category) in vegetableCategories" :key="category" :value="category">{{ category }}</option>
+          <select
+            v-model="selectedCategory"
+            class="form-control"
+          >
+            <option value="">
+              请选择分类
+            </option>
+            <option
+              v-for="(vegetables, category) in vegetableCategories"
+              :key="category"
+              :value="category"
+            >
+              {{ category }}
+            </option>
           </select>
         </div>
-        <div v-if="selectedCategory" class="vegetable-list">
+        <div
+          v-if="selectedCategory"
+          class="vegetable-list"
+        >
           <span 
             v-for="vegetable in vegetableCategories[selectedCategory]" 
             :key="vegetable"
@@ -192,30 +232,65 @@ onMounted(async () => {
         </div>
         <div class="form-item">
           <label class="form-label">蔬菜名称：</label>
-          <input v-model="currentOrder.vegetable" type="text" class="form-control" placeholder="请输入蔬菜名称">
+          <input
+            v-model="currentOrder.vegetable"
+            type="text"
+            class="form-control"
+            placeholder="请输入蔬菜名称"
+          >
         </div>
         <div class="form-item">
           <label class="form-label">重量（斤）：</label>
-          <input v-model.number="currentOrder.weight" type="number" class="form-control">
+          <input
+            v-model.number="currentOrder.weight"
+            type="number"
+            class="form-control"
+          >
         </div>
         <div class="form-item">
           <label class="form-label">价格（元）：</label>
-          <input v-model.number="currentOrder.price" type="number" class="form-control">
+          <input
+            v-model.number="currentOrder.price"
+            type="number"
+            class="form-control"
+          >
         </div>
         <div class="form-item">
           <label class="form-label">大排档：</label>
-          <select v-model="currentOrder.stallId" class="form-control">
-            <option v-for="merchant in merchants" :key="merchant.id" :value="merchant.id">{{ merchant.name }}</option>
+          <select
+            v-model="currentOrder.stallId"
+            class="form-control"
+          >
+            <option
+              v-for="merchant in merchants"
+              :key="merchant.id"
+              :value="merchant.id"
+            >
+              {{ merchant.name }}
+            </option>
           </select>
         </div>
         <div class="form-item">
           <label class="form-label">状态：</label>
-          <input type="checkbox" v-model="currentOrder.completed">
+          <input
+            v-model="currentOrder.completed"
+            type="checkbox"
+          >
           {{ currentOrder.completed ? '已完成' : '未完成' }}
         </div>
         <div class="dialog-actions">
-          <button class="btn btn-default" @click="closeEditDialog">取消</button>
-          <button class="btn btn-primary" @click="saveOrder">保存</button>
+          <button
+            class="btn btn-default"
+            @click="closeEditDialog"
+          >
+            取消
+          </button>
+          <button
+            class="btn btn-primary"
+            @click="saveOrder"
+          >
+            保存
+          </button>
         </div>
       </div>
     </div>

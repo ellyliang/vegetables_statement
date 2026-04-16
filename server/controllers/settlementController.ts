@@ -1,16 +1,19 @@
+import type { Context } from 'koa';
 import settlementModel from '../models/settlementModel.js';
+
+type RouterContext = Context & { params: Record<string, string> };
 
 // 结算控制器
 const settlementController = {
   // 获取所有结算
-  async getAllSettlements(ctx) {
+  async getAllSettlements(ctx: RouterContext): Promise<void> {
     try {
       const settlements = await settlementModel.getAllSettlements();
       ctx.body = {
         success: true,
         data: settlements
       };
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,
@@ -20,7 +23,7 @@ const settlementController = {
   },
 
   // 根据 ID 获取结算
-  async getSettlementById(ctx) {
+  async getSettlementById(ctx: RouterContext): Promise<void> {
     try {
       const id = ctx.params.id;
       const settlement = await settlementModel.getSettlementById(id);
@@ -36,7 +39,7 @@ const settlementController = {
           message: '结算不存在'
         };
       }
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,
@@ -46,16 +49,18 @@ const settlementController = {
   },
 
   // 创建结算
-  async createSettlement(ctx) {
+  async createSettlement(ctx: RouterContext): Promise<void> {
     try {
-      const settlement = ctx.request.body;
-      const newSettlement = await settlementModel.createSettlement(settlement);
+      const settlement = (ctx.request as unknown as { body: Record<string, unknown> }).body;
+      const newSettlement = await settlementModel.createSettlement(
+        settlement as Parameters<typeof settlementModel.createSettlement>[0]
+      );
       ctx.status = 201;
       ctx.body = {
         success: true,
         data: newSettlement
       };
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,
@@ -65,7 +70,7 @@ const settlementController = {
   },
 
   // 删除结算
-  async deleteSettlement(ctx) {
+  async deleteSettlement(ctx: RouterContext): Promise<void> {
     try {
       const id = ctx.params.id;
       const result = await settlementModel.deleteSettlement(id);
@@ -81,7 +86,7 @@ const settlementController = {
           message: '结算不存在'
         };
       }
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,

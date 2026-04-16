@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
@@ -11,21 +12,21 @@ const instance = axios.create({
 
 // 请求拦截器
 instance.interceptors.request.use(
-  config => {
+  (config: InternalAxiosRequestConfig) => {
     // 可以在这里添加 token 等认证信息
     return config;
   },
-  error => {
+  (error: unknown) => {
     return Promise.reject(error);
   }
 );
 
 // 响应拦截器
 instance.interceptors.response.use(
-  response => {
+  (response: AxiosResponse) => {
     return response.data;
   },
-  error => {
+  (error: unknown) => {
     console.error('API 错误:', error);
     return Promise.reject(error);
   }

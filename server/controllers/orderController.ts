@@ -1,16 +1,19 @@
+import type { Context } from 'koa';
 import orderModel from '../models/orderModel.js';
+
+type RouterContext = Context & { params: Record<string, string> };
 
 // 订单控制器
 const orderController = {
   // 获取所有订单
-  async getAllOrders(ctx) {
+  async getAllOrders(ctx: RouterContext): Promise<void> {
     try {
       const orders = await orderModel.getAllOrders();
       ctx.body = {
         success: true,
         data: orders
       };
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,
@@ -20,7 +23,7 @@ const orderController = {
   },
 
   // 根据 ID 获取订单
-  async getOrderById(ctx) {
+  async getOrderById(ctx: RouterContext): Promise<void> {
     try {
       const id = ctx.params.id;
       const order = await orderModel.getOrderById(id);
@@ -36,7 +39,7 @@ const orderController = {
           message: '订单不存在'
         };
       }
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,
@@ -46,16 +49,16 @@ const orderController = {
   },
 
   // 创建订单
-  async createOrder(ctx) {
+  async createOrder(ctx: RouterContext): Promise<void> {
     try {
-      const order = ctx.request.body;
-      const newOrder = await orderModel.createOrder(order);
+      const order = (ctx.request as unknown as { body: Record<string, unknown> }).body;
+      const newOrder = await orderModel.createOrder(order as Parameters<typeof orderModel.createOrder>[0]);
       ctx.status = 201;
       ctx.body = {
         success: true,
         data: newOrder
       };
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,
@@ -65,10 +68,10 @@ const orderController = {
   },
 
   // 更新订单
-  async updateOrder(ctx) {
+  async updateOrder(ctx: RouterContext): Promise<void> {
     try {
       const id = ctx.params.id;
-      const order = ctx.request.body;
+      const order = (ctx.request as unknown as { body: Record<string, unknown> }).body;
       const updatedOrder = await orderModel.updateOrder(id, order);
       if (updatedOrder) {
         ctx.body = {
@@ -82,7 +85,7 @@ const orderController = {
           message: '订单不存在'
         };
       }
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,
@@ -92,7 +95,7 @@ const orderController = {
   },
 
   // 删除订单
-  async deleteOrder(ctx) {
+  async deleteOrder(ctx: RouterContext): Promise<void> {
     try {
       const id = ctx.params.id;
       const result = await orderModel.deleteOrder(id);
@@ -108,7 +111,7 @@ const orderController = {
           message: '订单不存在'
         };
       }
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,
@@ -118,7 +121,7 @@ const orderController = {
   },
 
   // 切换订单完成状态
-  async toggleCompleted(ctx) {
+  async toggleCompleted(ctx: RouterContext): Promise<void> {
     try {
       const id = ctx.params.id;
       const updatedOrder = await orderModel.toggleCompleted(id);
@@ -134,7 +137,7 @@ const orderController = {
           message: '订单不存在'
         };
       }
-    } catch (error) {
+    } catch {
       ctx.status = 500;
       ctx.body = {
         success: false,

@@ -2,8 +2,6 @@ import { mount } from '@vue/test-utils';
 import OrderInfo from '@/views/OrderInfo/index.vue';
 import orderApi from '@/api/orderApi';
 import merchantApi from '@/api/merchantApi';
-import { vi, describe, test, beforeEach, expect } from 'vitest';
-
 // 模拟 API
 vi.mock('@/api/orderApi', () => ({
   default: {
@@ -18,14 +16,14 @@ vi.mock('@/api/merchantApi', () => ({
 }));
 
 describe('OrderInfo Component', () => {
-  let wrapper;
+  let wrapper: ReturnType<typeof mount>;
 
   beforeEach(() => {
     // 重置模拟函数
     vi.clearAllMocks();
 
     // 模拟 API 返回数据
-    merchantApi.getAllMerchants.mockResolvedValue({
+    (merchantApi.getAllMerchants as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
       data: [
         { id: 1, name: '张三大排档' },
@@ -33,7 +31,7 @@ describe('OrderInfo Component', () => {
       ]
     });
 
-    orderApi.getAllOrders.mockResolvedValue({
+    (orderApi.getAllOrders as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
       data: [
         { id: 1, vegetable: '西红柿', weight: 5, price: 10, stallId: 1, completed: false },
@@ -54,13 +52,13 @@ describe('OrderInfo Component', () => {
     await wrapper.vm.$nextTick();
     expect(merchantApi.getAllMerchants).toHaveBeenCalled();
     expect(orderApi.getAllOrders).toHaveBeenCalled();
-    expect(wrapper.vm.merchants.length).toBe(2);
-    expect(wrapper.vm.orders.length).toBe(2);
+    expect((wrapper.vm as unknown as { merchants: unknown[] }).merchants.length).toBe(2);
+    expect((wrapper.vm as unknown as { orders: unknown[] }).orders.length).toBe(2);
   });
 
   test('选择商户', () => {
-    wrapper.vm.formData.stallId = '1';
-    expect(wrapper.vm.formData.stallId).toBe('1');
+    (wrapper.vm as unknown as { formData: { stallId: string } }).formData.stallId = '1';
+    expect((wrapper.vm as unknown as { formData: { stallId: string } }).formData.stallId).toBe('1');
   });
 
   test('生成订单信息', async () => {
@@ -69,7 +67,7 @@ describe('OrderInfo Component', () => {
     window.alert = vi.fn();
 
     // 确保商户数据包含完整字段
-    merchantApi.getAllMerchants.mockResolvedValue({
+    (merchantApi.getAllMerchants as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
       data: [
         { id: 1, name: '张三大排档', address: '北京市朝阳区', contact: '13800138001' },
@@ -78,24 +76,24 @@ describe('OrderInfo Component', () => {
     });
 
     // 确保订单数据与商户ID匹配
-    orderApi.getAllOrders.mockResolvedValue({
+    (orderApi.getAllOrders as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
       data: [
         { id: 1, vegetable: '西红柿', weight: 5, price: 10, stallId: 1, completed: false },
         { id: 2, vegetable: '黄瓜', weight: 3, price: 6, stallId: 1, completed: true }
       ]
     });
-    
+
     // 重新挂载组件以加载新数据
     wrapper = mount(OrderInfo);
     await wrapper.vm.$nextTick();
-    
+
     // 选择商户并生成订单信息
-    wrapper.vm.formData.stallId = '1';
-    await wrapper.vm.generateOrderInfo();
-    
-    expect(wrapper.vm.orderInfo).toBeTruthy();
-    expect(typeof wrapper.vm.orderInfo).toBe('string');
+    (wrapper.vm as unknown as { formData: { stallId: string } }).formData.stallId = '1';
+    await (wrapper.vm as unknown as { generateOrderInfo: () => void }).generateOrderInfo();
+
+    expect((wrapper.vm as unknown as { orderInfo: string }).orderInfo).toBeTruthy();
+    expect(typeof (wrapper.vm as unknown as { orderInfo: string }).orderInfo).toBe('string');
 
     // 恢复原始 alert
     window.alert = originalAlert;
@@ -108,13 +106,13 @@ describe('OrderInfo Component', () => {
 
     // 模拟 clipboard API
     if (!navigator.clipboard) {
-      navigator.clipboard = {
+      (navigator as unknown as { clipboard: { writeText: ReturnType<typeof vi.fn> } }).clipboard = {
         writeText: vi.fn().mockResolvedValue(undefined)
       };
     }
-    
+
     // 确保商户数据包含完整字段
-    merchantApi.getAllMerchants.mockResolvedValue({
+    (merchantApi.getAllMerchants as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
       data: [
         { id: 1, name: '张三大排档', address: '北京市朝阳区', contact: '13800138001' },
@@ -123,26 +121,28 @@ describe('OrderInfo Component', () => {
     });
 
     // 确保订单数据与商户ID匹配
-    orderApi.getAllOrders.mockResolvedValue({
+    (orderApi.getAllOrders as ReturnType<typeof vi.fn>).mockResolvedValue({
       success: true,
       data: [
         { id: 1, vegetable: '西红柿', weight: 5, price: 10, stallId: 1, completed: false },
         { id: 2, vegetable: '黄瓜', weight: 3, price: 6, stallId: 1, completed: true }
       ]
     });
-    
+
     // 重新挂载组件以加载新数据
     wrapper = mount(OrderInfo);
     await wrapper.vm.$nextTick();
-    
+
     // 生成订单信息
-    wrapper.vm.formData.stallId = '1';
-    await wrapper.vm.generateOrderInfo();
-    
+    (wrapper.vm as unknown as { formData: { stallId: string } }).formData.stallId = '1';
+    await (wrapper.vm as unknown as { generateOrderInfo: () => void }).generateOrderInfo();
+
     // 复制订单信息
-    await wrapper.vm.copyOrderInfo();
-    
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(wrapper.vm.orderInfo);
+    await (wrapper.vm as unknown as { copyOrderInfo: () => void }).copyOrderInfo();
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      (wrapper.vm as unknown as { orderInfo: string }).orderInfo
+    );
 
     // 恢复原始 alert
     window.alert = originalAlert;

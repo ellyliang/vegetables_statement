@@ -1,24 +1,25 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import settlementApi from '@/api/settlementApi';
 import orderApi from '@/api/orderApi';
 import merchantApi from '@/api/merchantApi';
+import type { Merchant, Order, Settlement } from '@/types';
 
 // 商户数据
-const merchants = ref([]);
+const merchants = ref<Merchant[]>([]);
 
 // 订单数据
-const orders = ref([]);
+const orders = ref<Order[]>([]);
 
 // 结算数据
-const settlements = ref([]);
+const settlements = ref<Settlement[]>([]);
 
 // 筛选条件
-const selectedStall = ref('');
-const dateRange = ref(['', '']);
+const selectedStall = ref<string>('');
+const dateRange = ref<[string, string]>(['', '']);
 
 // 加载商户数据
-const loadMerchants = async () => {
+const loadMerchants = async (): Promise<void> => {
   try {
     const response = await merchantApi.getAllMerchants();
     if (response.success) {
@@ -30,7 +31,7 @@ const loadMerchants = async () => {
 };
 
 // 加载订单数据
-const loadOrders = async () => {
+const loadOrders = async (): Promise<void> => {
   try {
     const response = await orderApi.getAllOrders();
     if (response.success) {
@@ -42,7 +43,7 @@ const loadOrders = async () => {
 };
 
 // 加载结算数据
-const loadSettlements = async () => {
+const loadSettlements = async (): Promise<void> => {
   try {
     const response = await settlementApi.getAllSettlements();
     if (response.success) {
@@ -54,7 +55,7 @@ const loadSettlements = async () => {
 };
 
 // 计算过滤后的订单
-const filteredOrders = computed(() => {
+const filteredOrders = computed<Order[]>(() => {
   let result = orders.value;
   if (selectedStall.value) {
     result = result.filter(o => o.stallId == selectedStall.value);
@@ -63,14 +64,14 @@ const filteredOrders = computed(() => {
 });
 
 // 计算总金额
-const totalAmount = computed(() => {
-  return filteredOrders.value.reduce((sum, order) => sum + (order.price * order.weight), 0);
+const totalAmount = computed<number>(() => {
+  return filteredOrders.value.reduce((sum, order) => sum + (Number(order.price) * Number(order.weight)), 0);
 });
 
 // 批量结算
-const batchSettlement = async () => {
+const batchSettlement = async (): Promise<void> => {
   if (filteredOrders.value.length === 0) return;
-  
+
   try {
     // 创建结算
     const newSettlement = {
@@ -78,14 +79,14 @@ const batchSettlement = async () => {
       amount: totalAmount.value,
       date: new Date().toISOString().split('T')[0]
     };
-    
+
     const response = await settlementApi.createSettlement(newSettlement);
     if (response.success) {
       // 标记订单为已完成
       for (const order of filteredOrders.value) {
         await orderApi.toggleCompleted(order.id);
       }
-      
+
       // 重新加载数据
       await loadSettlements();
       await loadOrders();
@@ -96,8 +97,8 @@ const batchSettlement = async () => {
 };
 
 // 查看结算详情
-const viewSettlementDetail = (settlement) => {
-  alert(`结算详情：\n大排档：${merchants.find(m => m.id === settlement.stallId)?.name}\n金额：${settlement.amount} 元\n日期：${settlement.date}`);
+const viewSettlementDetail = (settlement: Settlement): void => {
+  alert(`结算详情：\n大排档：${merchants.value.find(m => m.id === settlement.stallId)?.name}\n金额：${settlement.amount} 元\n日期：${settlement.date}`);
 };
 
 // 生命周期钩子
@@ -114,21 +115,47 @@ onMounted(async () => {
     <div style="margin-bottom: 16px; padding: 16px; background: #f5f5f5; border-radius: 4px;">
       <div class="form-item">
         <label class="form-label">大排档：</label>
-        <select v-model="selectedStall" class="form-control">
-          <option value="">全部</option>
-          <option v-for="merchant in merchants" :key="merchant.id" :value="merchant.id">{{ merchant.name }}</option>
+        <select
+          v-model="selectedStall"
+          class="form-control"
+        >
+          <option value="">
+            全部
+          </option>
+          <option
+            v-for="merchant in merchants"
+            :key="merchant.id"
+            :value="merchant.id"
+          >
+            {{ merchant.name }}
+          </option>
         </select>
       </div>
       <div class="form-item">
         <label class="form-label">日期范围：</label>
-        <input type="date" v-model="dateRange[0]" class="form-control" style="margin-right: 8px;">
-        <input type="date" v-model="dateRange[1]" class="form-control">
+        <input
+          v-model="dateRange[0]"
+          type="date"
+          class="form-control"
+          style="margin-right: 8px;"
+        >
+        <input
+          v-model="dateRange[1]"
+          type="date"
+          class="form-control"
+        >
       </div>
       <div class="form-item">
         <label class="form-label">总金额：</label>
         <span style="font-weight: bold; color: #1890ff;">{{ totalAmount }} 元</span>
       </div>
-      <button class="btn btn-primary" @click="batchSettlement" :disabled="filteredOrders.length === 0">批量结算</button>
+      <button
+        class="btn btn-primary"
+        :disabled="filteredOrders.length === 0"
+        @click="batchSettlement"
+      >
+        批量结算
+      </button>
     </div>
     
     <h4>结算记录</h4>
@@ -143,13 +170,21 @@ onMounted(async () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="settlement in settlements" :key="settlement.id">
+        <tr
+          v-for="settlement in settlements"
+          :key="settlement.id"
+        >
           <td>{{ settlement.id }}</td>
           <td>{{ merchants.find(m => m.id === settlement.stallId)?.name }}</td>
           <td>{{ settlement.amount }}</td>
           <td>{{ settlement.date }}</td>
           <td>
-            <button class="btn btn-primary" @click="viewSettlementDetail(settlement)">查看详情</button>
+            <button
+              class="btn btn-primary"
+              @click="viewSettlementDetail(settlement)"
+            >
+              查看详情
+            </button>
           </td>
         </tr>
       </tbody>
